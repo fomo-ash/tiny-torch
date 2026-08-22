@@ -214,6 +214,116 @@ class Tensor:
 
         return out
 
+        # -------------------------
+    # Sum
+    # -------------------------
+
+    def sum(self):
+        """
+        Sum all elements of the Tensor.
+
+        Example:
+
+            x = [1, 2, 3]
+
+            x.sum() = 6
+
+        This is a reduction operation because many values
+        are reduced into a single value.
+
+        Backward:
+
+            y = x1 + x2 + x3
+
+        Therefore:
+
+            dy/dx1 = 1
+            dy/dx2 = 1
+            dy/dx3 = 1
+
+        So the incoming gradient is propagated to every
+        element of the original Tensor.
+        """
+
+        out = Tensor(
+            self.data.sum(),
+            requires_grad=self.requires_grad
+        )
+
+        out._prev = {self}
+
+        def _backward():
+
+            if self.requires_grad:
+
+                if self.grad is None:
+                    self.grad = np.zeros_like(self.data)
+
+                # out.grad is a scalar because sum() produced
+                # a scalar Tensor.
+                #
+                # Every input element contributes directly to
+                # the sum, so every element receives the same
+                # incoming gradient.
+                self.grad += np.ones_like(self.data) * out.grad
+
+        out._backward = _backward
+
+        return out
+
+    # -------------------------
+    # Mean
+    # -------------------------
+
+    def mean(self):
+        """
+        Calculate the mean of all elements.
+
+        Example:
+
+            x = [2, 4, 6]
+
+            x.mean() = 4
+
+        Mathematically:
+
+            mean(x) = sum(x) / N
+
+        where N is the number of elements.
+
+        Backward:
+
+            d(mean)/dx_i = 1/N
+
+        Therefore the incoming gradient is distributed
+        equally across all elements.
+        """
+
+        out = Tensor(
+            self.data.mean(),
+            requires_grad=self.requires_grad
+        )
+
+        out._prev = {self}
+
+        def _backward():
+
+            if self.requires_grad:
+
+                if self.grad is None:
+                    self.grad = np.zeros_like(self.data)
+
+                # Every element contributes 1/N to the mean.
+                n = self.data.size
+
+                self.grad += (
+                    np.ones_like(self.data) / n
+                ) * out.grad
+
+        out._backward = _backward
+
+        return out
+
     # ============================================================
     # SUBTRACTION
     # ============================================================

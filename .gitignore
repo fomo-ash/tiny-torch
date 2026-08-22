@@ -1,7 +1,17 @@
+
+# Python generated files
 __pycache__/
 *.py[cod]
+
+# Jupyter generated files
 .ipynb_checkpoints/
-.env
-.venv/
+
+# Virtual environments
 venv/
+.venv/
+
+# Environment variables
+.env
+
+# OS generated files
 .DS_Store
