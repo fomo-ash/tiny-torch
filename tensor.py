@@ -578,6 +578,110 @@ class Tensor:
     def matmul(self, other):
         return self @ other
 
+    #log
+
+    def log(self):
+      # forwad log(x)
+
+      out = Tensor(
+          np.log(self.data),
+          requires_grad=self.requires_grad
+      )
+
+      out._prev = {self}
+
+      def _backward():
+        # for z=logx dz/dx=1/x
+
+        if self.grad is None:
+          self.grad = np.zeros_like(self.data)
+
+        # The gradient for log(x) is 1/x. So, out.grad should be multiplied by 1/self.data
+        self.grad += (1 / self.data) * out.grad
+
+      out._backward = _backward
+
+      return out
+
+    def exp(self):
+      #forwad e^x;
+
+      out= Tensor(
+          np.exp(self.data),
+          requires_grad=self.requires_grad
+      )
+
+      out._prev = {self}
+
+      def _backward():
+        #for z=exp(x) dz/dx = exp(x)
+
+        if self.grad is None:
+          self.grad=np.zeros_like(self.data)
+
+        # The gradient for exp(x) is exp(x). So, out.grad should be multiplied by out.data (which is exp(x))
+        self.grad = self.grad + out.data * out.grad
+
+      out._backward = _backward
+
+      return out
+
+
+    def __getitem__(self, index):
+        """
+        Allow Tensor indexing.
+
+        Example:
+            x = Tensor([10, 20, 30])
+            x[1] -> Tensor(20)
+        """
+
+        out = Tensor(
+            self.data[index],
+            requires_grad=self.requires_grad
+        )
+
+        out._prev = {self}
+
+        def _backward():
+
+            if self.requires_grad:
+
+                if self.grad is None:
+                    self.grad = np.zeros_like(self.data)
+
+                # Only the selected element receives
+                # the incoming gradient.
+                self.grad[index] += out.grad
+
+        out._backward = _backward
+
+        return out
+
+    def __neg__(self):
+
+        out = Tensor(
+            -self.data,
+            requires_grad=self.requires_grad
+        )
+
+        out._prev = {self}
+
+        def _backward():
+
+            if self.requires_grad:
+
+                if self.grad is None:
+                    self.grad = np.zeros_like(self.data)
+
+                self.grad -= out.grad
+
+        out._backward = _backward
+
+        return out
+
+
+
     # ============================================================
     # BACKWARD
     # ============================================================
