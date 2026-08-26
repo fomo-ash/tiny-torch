@@ -1,30 +1,30 @@
 
 from ..parameter import Parameter
 
-class Module: #common functionality to all neural network layers
-  def parameters(self):
-    params=[] #gives list of all parameters
+class Module:
+    def parameters(self):
+        params = []
+        for value in self.__dict__.values():
+            # Robust check: if it has requires_grad, it's a Parameter (even if reloaded)
+            if hasattr(value, 'requires_grad'):
+                params.append(value)
+            # If it has a parameters method, it's a sub-module
+            elif hasattr(value, 'parameters') and callable(value.parameters) and value is not self:
+                params.extend(value.parameters())
+            elif isinstance(value, list):
+                for item in value:
+                    if hasattr(item, 'parameters') and callable(item.parameters):
+                        params.extend(item.parameters())
+                    elif hasattr(item, 'requires_grad'):
+                        params.append(item)
+        return params
 
-    for value in self.__dict__.values(): #we use dict to store the values
-      if isinstance(value, Parameter):
-        params.append(value)
-
-      elif isinstance(value, Module): # amodule can have multiple modules inside it
-        params.extend(value.parameters()) #The outer model needs to find parameters inside the inner modules.
-      
-    return params
-
-  def zero_grad(self): #old gradients should be overwritten, reset gradiesnt befpre training
-
+    def zero_grad(self):
         for param in self.parameters():
-            param.grad = None 
+            param.grad = None
 
-  def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
+        return self.forward(*args, **kwargs)
 
-        return self.forward(*args, **kwargs) #Module to accept flexible arguments.
-
-  def forward(self, *args, **kwargs):
-
-        raise NotImplementedError(
-            "Every Module must implement forward()"
-        )
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError("Every Module must implement forward()")
