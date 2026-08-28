@@ -8,8 +8,9 @@ class Linear(Module):
         super().__init__()
         self.in_features = in_features
         self.out_features = out_features
+        # Initialize weights with small random values
         self.weight = Parameter(
-            np.random.randn(in_features, out_features) * 0.01
+            np.random.randn(in_features, out_features) * 0.1
         )
         self.bias = Parameter(np.zeros(out_features))
 
@@ -17,4 +18,5 @@ class Linear(Module):
         return x @ self.weight + self.bias
 
     def parameters(self):
+        # Fixed typo: self.weights -> self.weight
         return [self.weight, self.bias]
